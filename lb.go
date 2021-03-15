@@ -30,17 +30,19 @@ func init() {
 	lb.backends = []Backend{
 		Backend{Host: "localhost", Port: 8081, IsHealthy: false},
 		Backend{Host: "localhost", Port: 8082, IsHealthy: true},
+		Backend{Host: "localhost", Port: 8083, IsHealthy: true},
+		Backend{Host: "localhost", Port: 8084, IsHealthy: true},
 	}
 }
 
 func (l LB) Run() {
-	listener, err := net.Listen("tcp", ":8080")
+	listener, err := net.Listen("tcp", ":9090")
 	if err != nil {
 		panic(err)
 	}
 
 	defer listener.Close()
-	log.Println("LB listening on port 8080 ...")
+	log.Println("LB listening on port 9090 ...")
 
 	go func() {
 		for {
@@ -58,17 +60,23 @@ func (l LB) Run() {
 		connection, err := listener.Accept()
 		if err != nil {
 			log.Printf("unable to accept connection: %s", err.Error())
-			continue
+			panic(err)
 		}
+
+		log.Printf(connection.LocalAddr().String(), connection.RemoteAddr().String())
 
 		// Once the connection is accepted proxying it to backend
 		go lb.proxy(connection)
 	}
 }
 
+var index int = 0
+
 func (l LB) proxy(srcConnection net.Conn) {
+	index = (index + 1) % len(l.backends)
+
 	// Get backend sserver depending on some algorithm
-	backend := l.backends[0]
+	backend := l.backends[index]
 
 	// Setup backend connection
 	backendServerConnection, err := net.Dial("tcp", fmt.Sprintf("%s:%d", backend.Host, backend.Port))
@@ -78,6 +86,7 @@ func (l LB) proxy(srcConnection net.Conn) {
 		// send back error to src
 		srcConnection.Write([]byte("backend not available"))
 		srcConnection.Close()
+		panic(err)
 	}
 
 	go io.Copy(backendServerConnection, srcConnection)

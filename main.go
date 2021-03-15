@@ -44,6 +44,7 @@ func setLogging() {
 	f, err := os.OpenFile("lb.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
+		panic(err)
 	}
 	log.SetOutput(f)
 
