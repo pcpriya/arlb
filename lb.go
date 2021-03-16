@@ -17,25 +17,27 @@ func (b Backend) String() string {
 	return fmt.Sprintf("%s:%d healthy:%v", b.Host, b.Port, b.IsHealthy)
 }
 
+type Event struct {
+	EventName string
+	Data      interface{}
+}
+
 type LB struct {
 	backends []Backend
-	events   chan string
+	events   chan Event
 }
 
 var lb LB
 
 func init() {
 	lb = LB{}
-	lb.events = make(chan string)
+	lb.events = make(chan Event)
 	lb.backends = []Backend{
-		Backend{Host: "localhost", Port: 8081, IsHealthy: false},
-		Backend{Host: "localhost", Port: 8082, IsHealthy: true},
-		Backend{Host: "localhost", Port: 8083, IsHealthy: true},
-		Backend{Host: "localhost", Port: 8084, IsHealthy: true},
+		Backend{Host: "localhost", Port: 8081, IsHealthy: true},
 	}
 }
 
-func (l LB) Run() {
+func (l *LB) Run() {
 	listener, err := net.Listen("tcp", ":9090")
 	if err != nil {
 		panic(err)
@@ -48,9 +50,15 @@ func (l LB) Run() {
 		for {
 			select {
 			case event := <-l.events:
-				if event == "quit" {
+				if event.EventName == "quit" {
 					log.Println("gracefully terminating ...")
 					return
+				} else if event.EventName == "backend/add" {
+					backend, isOk := event.Data.(Backend)
+					if !isOk {
+						panic(err)
+					}
+					l.backends = append(l.backends, backend)
 				}
 			}
 		}

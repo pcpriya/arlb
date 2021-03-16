@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 )
 
 func printBackends() {
@@ -24,18 +23,28 @@ func cli() {
 		var command string
 		fmt.Print(">>> ")
 		fmt.Scanf("%s", &command)
-		tokens := strings.Split(command, " ")
-		switch tokens[0] {
+		switch command {
 		case "quit":
-			lb.events <- "quit"
+			lb.events <- Event{EventName: "quit"}
 			// TODO: this is not idea. End this gracefully.
 			return
 		case "exit":
-			lb.events <- "quit"
+			lb.events <- Event{EventName: "quit"}
 			// TODO: this is not idea. End this gracefully.
 			return
 		case "list":
 			printBackends()
+		case "add":
+			var host string
+			var port int
+
+			fmt.Print("       Host: ")
+			fmt.Scanf("%s", &host)
+
+			fmt.Print("       Port: ")
+			fmt.Scanf("%d", &port)
+
+			lb.events <- Event{EventName: "backend/add", Data: Backend{Host: host, Port: port}}
 		}
 	}
 }
