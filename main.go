@@ -62,6 +62,8 @@ func setLogging() {
 
 func main() {
 	setLogging()
+	InitStrategy()
+	InitLB()
 	go lb.Run()
 	cli()
 }

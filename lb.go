@@ -25,19 +25,22 @@ type Event struct {
 type LB struct {
 	backends []Backend
 	events   chan Event
+	strategy *RoundRobinBalancingStrategy
 }
 
-var lb LB
+var lb *LB
 
-func init() {
-	lb = LB{}
-	lb.events = make(chan Event)
-	lb.backends = []Backend{
-		Backend{Host: "localhost", Port: 8081, IsHealthy: true},
+func InitLB() {
+	lb = &LB{
+		events: make(chan Event),
+		backends: []Backend{
+			Backend{Host: "localhost", Port: 8081, IsHealthy: true},
+		},
+		strategy: STRATEGY_ROUNDROBIN,
 	}
 }
 
-func (l *LB) Run() {
+func (lb *LB) Run() {
 	listener, err := net.Listen("tcp", ":9090")
 	if err != nil {
 		panic(err)
@@ -49,7 +52,7 @@ func (l *LB) Run() {
 	go func() {
 		for {
 			select {
-			case event := <-l.events:
+			case event := <-lb.events:
 				if event.EventName == "quit" {
 					log.Println("gracefully terminating ...")
 					return
@@ -58,7 +61,18 @@ func (l *LB) Run() {
 					if !isOk {
 						panic(err)
 					}
-					l.backends = append(l.backends, backend)
+					lb.backends = append(lb.backends, backend)
+				} else if event.EventName == "strategy/update" {
+					strategyName, isOk := event.Data.(string)
+					if !isOk {
+						panic(err)
+					}
+					switch strategyName {
+					case "round-robin":
+						lb.strategy = STRATEGY_ROUNDROBIN
+					default:
+						lb.strategy = STRATEGY_ROUNDROBIN
+					}
 				}
 			}
 		}
@@ -71,20 +85,17 @@ func (l *LB) Run() {
 			panic(err)
 		}
 
-		log.Printf(connection.LocalAddr().String(), connection.RemoteAddr().String())
+		// log.Printf("local: %v remote: %v", connection.LocalAddr().String(), connection.RemoteAddr().String())
 
 		// Once the connection is accepted proxying it to backend
 		go lb.proxy(connection)
 	}
 }
 
-var index int = 0
-
-func (l LB) proxy(srcConnection net.Conn) {
-	index = (index + 1) % len(l.backends)
-
+func (lb *LB) proxy(srcConnection net.Conn) {
 	// Get backend sserver depending on some algorithm
-	backend := l.backends[index]
+	backend := lb.strategy.GetNextBackend(lb.backends)
+	log.Printf("request to backend: %s", backend)
 
 	// Setup backend connection
 	backendServerConnection, err := net.Dial("tcp", fmt.Sprintf("%s:%d", backend.Host, backend.Port))
