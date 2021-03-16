@@ -1,18 +1,15 @@
 package main
 
-import "fmt"
-
 type BalancingStrategy interface {
-	GetNextBackend([]Backend) Backend
+	GetNextBackend([]*Backend) *Backend
 }
 
 type RoundRobinBalancingStrategy struct {
 	Index int
 }
 
-func (s *RoundRobinBalancingStrategy) GetNextBackend(backends []Backend) Backend {
+func (s *RoundRobinBalancingStrategy) GetNextBackend(backends []*Backend) *Backend {
 	s.Index = (s.Index + 1) % len(backends)
-	fmt.Printf("index: %d #backends: %d\n", s.Index, len(backends))
 	return backends[s.Index]
 }
 

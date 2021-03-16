@@ -8,13 +8,14 @@ import (
 )
 
 type Backend struct {
-	Host      string
-	Port      int
-	IsHealthy bool
+	Host        string
+	Port        int
+	IsHealthy   bool
+	NumRequests int
 }
 
-func (b Backend) String() string {
-	return fmt.Sprintf("%s:%d healthy:%v", b.Host, b.Port, b.IsHealthy)
+func (b *Backend) String() string {
+	return fmt.Sprintf("%s:%d healthy:%v #reqs:%d", b.Host, b.Port, b.IsHealthy, b.NumRequests)
 }
 
 type Event struct {
@@ -23,7 +24,7 @@ type Event struct {
 }
 
 type LB struct {
-	backends []Backend
+	backends []*Backend
 	events   chan Event
 	strategy BalancingStrategy
 }
@@ -33,8 +34,8 @@ var lb *LB
 func InitLB() {
 	lb = &LB{
 		events: make(chan Event),
-		backends: []Backend{
-			Backend{Host: "localhost", Port: 8081, IsHealthy: true},
+		backends: []*Backend{
+			&Backend{Host: "localhost", Port: 8081, IsHealthy: true},
 		},
 		strategy: STRATEGY_ROUNDROBIN,
 	}
@@ -61,7 +62,7 @@ func (lb *LB) Run() {
 					if !isOk {
 						panic(err)
 					}
-					lb.backends = append(lb.backends, backend)
+					lb.backends = append(lb.backends, &backend)
 				} else if event.EventName == "strategy/update" {
 					strategyName, isOk := event.Data.(string)
 					if !isOk {
@@ -108,6 +109,7 @@ func (lb *LB) proxy(srcConnection net.Conn) {
 		panic(err)
 	}
 
+	backend.NumRequests++
 	go io.Copy(backendServerConnection, srcConnection)
 	go io.Copy(srcConnection, backendServerConnection)
 }
