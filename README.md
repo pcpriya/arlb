@@ -19,3 +19,5 @@ go run .
  [ ] Export LB metrics and visualize it through Grafana.
  [ ] Connection Pooling
  [ ] If protocol/scheme specific then identify response status/codes and dump it into metrics
+ [ ] Ability to healthcheck and stop/start routing traffic to heaalthy ones
+ [ ] Consistent Hashing for load balancing
