@@ -45,6 +45,15 @@ func cli() {
 			fmt.Scanf("%d", &port)
 
 			lb.events <- Event{EventName: "backend/add", Data: Backend{Host: host, Port: port}}
+		case "strategy":
+			var strategy string
+
+			fmt.Print("       Name of the strategy: ")
+			fmt.Scanf("%s", &strategy)
+
+			lb.events <- Event{EventName: "strategy/change", Data: strategy}
+		default:
+			fmt.Println("available commands: list, add, strategy, exit")
 		}
 	}
 }

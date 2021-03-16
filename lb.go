@@ -63,7 +63,7 @@ func (lb *LB) Run() {
 						panic(err)
 					}
 					lb.backends = append(lb.backends, &backend)
-				} else if event.EventName == "strategy/update" {
+				} else if event.EventName == "strategy/change" {
 					strategyName, isOk := event.Data.(string)
 					if !isOk {
 						panic(err)
