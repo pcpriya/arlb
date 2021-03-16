@@ -2,6 +2,10 @@ package main
 
 import "fmt"
 
+type BalancingStrategy interface {
+	GetNextBackend([]Backend) Backend
+}
+
 type RoundRobinBalancingStrategy struct {
 	Index int
 }

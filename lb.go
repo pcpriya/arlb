@@ -25,7 +25,7 @@ type Event struct {
 type LB struct {
 	backends []Backend
 	events   chan Event
-	strategy *RoundRobinBalancingStrategy
+	strategy BalancingStrategy
 }
 
 var lb *LB
