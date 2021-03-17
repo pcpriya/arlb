@@ -2,7 +2,7 @@ package main
 
 type BalancingStrategy interface {
 	Init([]*Backend)
-	GetNextBackend() *Backend
+	GetNextBackend(IncomingReq) *Backend
 	RegisterBackend(*Backend)
 }
 
@@ -16,7 +16,7 @@ func (s *RRBalancingStrategy) Init(backends []*Backend) {
 	s.Backends = backends
 }
 
-func (s *RRBalancingStrategy) GetNextBackend() *Backend {
+func (s *RRBalancingStrategy) GetNextBackend(_ IncomingReq) *Backend {
 	s.Index = (s.Index + 1) % len(s.Backends)
 	return s.Backends[s.Index]
 }

@@ -52,6 +52,14 @@ func cli() {
 			fmt.Scanf("%s", &strategy)
 
 			lb.events <- Event{EventName: "strategy/change", Data: strategy}
+		case "test":
+			var reqId string
+
+			fmt.Print("       Request ID: ")
+			fmt.Scanf("%s", &reqId)
+
+			backend := lb.strategy.GetNextBackend(IncomingReq{reqId: reqId})
+			fmt.Printf("request: %s goes to backend: %s\n", reqId, backend)
 		default:
 			fmt.Println("available commands: list, add, strategy, exit")
 		}

@@ -107,7 +107,7 @@ func (lb *LB) Run() {
 
 func (lb *LB) proxy(req IncomingReq) {
 	// Get backend sserver depending on some algorithm
-	backend := lb.strategy.GetNextBackend()
+	backend := lb.strategy.GetNextBackend(req)
 	log.Printf("in-req: %s out-req: %s", req.reqId, backend.String())
 
 	// Setup backend connection
