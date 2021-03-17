@@ -41,11 +41,14 @@ var lb *LB
 func InitLB() {
 	backends := []*Backend{
 		&Backend{Host: "localhost", Port: 8081, IsHealthy: true},
+		&Backend{Host: "localhost", Port: 8082, IsHealthy: true},
+		&Backend{Host: "localhost", Port: 8083, IsHealthy: true},
+		&Backend{Host: "localhost", Port: 8084, IsHealthy: true},
 	}
 	lb = &LB{
 		events:   make(chan Event),
 		backends: backends,
-		strategy: NewRRBalancingStrategy(backends),
+		strategy: NewHashedBalancingStrategy(backends),
 	}
 }
 
@@ -83,8 +86,10 @@ func (lb *LB) Run() {
 						lb.strategy = NewRRBalancingStrategy(lb.backends)
 					case "static":
 						lb.strategy = NewStaticBalancingStrategy(lb.backends)
+					case "hash":
+						lb.strategy = NewHashedBalancingStrategy(lb.backends)
 					default:
-						lb.strategy = NewRRBalancingStrategy(lb.backends)
+						lb.strategy = NewHashedBalancingStrategy(lb.backends)
 					}
 				}
 			}
