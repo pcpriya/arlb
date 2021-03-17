@@ -111,7 +111,7 @@ func (lb *LB) proxy(req IncomingReq) {
 	log.Printf("in-req: %s out-req: %s", req.reqId, backend.String())
 
 	// Setup backend connection
-	backendServerConnection, err := net.Dial("tcp", fmt.Sprintf("%s:%d", backend.Host, backend.Port))
+	backendConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", backend.Host, backend.Port))
 	if err != nil {
 		log.Printf("error connecting to backend: %s", err.Error())
 
@@ -122,6 +122,6 @@ func (lb *LB) proxy(req IncomingReq) {
 	}
 
 	backend.NumRequests++
-	go io.Copy(backendServerConnection, req.srcConn)
-	go io.Copy(req.srcConn, backendServerConnection)
+	go io.Copy(backendConn, req.srcConn)
+	go io.Copy(req.srcConn, backendConn)
 }
