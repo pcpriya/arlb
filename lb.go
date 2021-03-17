@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"net"
+
+	"github.com/google/uuid"
 )
 
 type Backend struct {
@@ -15,7 +17,7 @@ type Backend struct {
 }
 
 func (b *Backend) String() string {
-	return fmt.Sprintf("%s:%d healthy:%v #reqs:%d", b.Host, b.Port, b.IsHealthy, b.NumRequests)
+	return fmt.Sprintf("%s:%d", b.Host, b.Port)
 }
 
 type Event struct {
@@ -27,6 +29,11 @@ type LB struct {
 	backends []*Backend
 	events   chan Event
 	strategy BalancingStrategy
+}
+
+type IncomingReq struct {
+	srcConn net.Conn
+	reqId   string
 }
 
 var lb *LB
@@ -89,14 +96,17 @@ func (lb *LB) Run() {
 		// log.Printf("local: %v remote: %v", connection.LocalAddr().String(), connection.RemoteAddr().String())
 
 		// Once the connection is accepted proxying it to backend
-		go lb.proxy(connection)
+		go lb.proxy(IncomingReq{
+			srcConn: connection,
+			reqId:   uuid.NewString(),
+		})
 	}
 }
 
-func (lb *LB) proxy(srcConnection net.Conn) {
+func (lb *LB) proxy(req IncomingReq) {
 	// Get backend sserver depending on some algorithm
 	backend := lb.strategy.GetNextBackend(lb.backends)
-	log.Printf("request to backend: %s", backend)
+	log.Printf("in-req: %s out-req: %s", req.reqId, backend.String())
 
 	// Setup backend connection
 	backendServerConnection, err := net.Dial("tcp", fmt.Sprintf("%s:%d", backend.Host, backend.Port))
@@ -104,12 +114,12 @@ func (lb *LB) proxy(srcConnection net.Conn) {
 		log.Printf("error connecting to backend. %s", err.Error())
 
 		// send back error to src
-		srcConnection.Write([]byte("backend not available"))
-		srcConnection.Close()
+		req.srcConn.Write([]byte("backend not available"))
+		req.srcConn.Close()
 		panic(err)
 	}
 
 	backend.NumRequests++
-	go io.Copy(backendServerConnection, srcConnection)
-	go io.Copy(srcConnection, backendServerConnection)
+	go io.Copy(backendServerConnection, req.srcConn)
+	go io.Copy(req.srcConn, backendServerConnection)
 }

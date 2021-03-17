@@ -21,3 +21,4 @@ go run .
  [ ] If protocol/scheme specific then identify response status/codes and dump it into metrics
  [ ] Ability to healthcheck and stop/start routing traffic to heaalthy ones
  [ ] Consistent Hashing for load balancing
+ [x] Unique ID to request
