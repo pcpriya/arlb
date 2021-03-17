@@ -24,3 +24,4 @@ go run .
  [x] Unique ID to request
  [x] Simulate Balancing Strategy by giving request id
  [x] Topology per strategy
+ [ ] Handle backend becoming unhealthy for all balancing strategy

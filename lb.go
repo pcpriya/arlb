@@ -62,17 +62,17 @@ func (lb *LB) Run() {
 		for {
 			select {
 			case event := <-lb.events:
-				if event.EventName == "quit" {
+				if event.EventName == CMD_Exit {
 					log.Println("gracefully terminating ...")
 					return
-				} else if event.EventName == "backend/add" {
+				} else if event.EventName == CMD_BackendAdd {
 					backend, isOk := event.Data.(Backend)
 					if !isOk {
 						panic(err)
 					}
 					lb.backends = append(lb.backends, &backend)
 					lb.strategy.RegisterBackend(&backend)
-				} else if event.EventName == "strategy/change" {
+				} else if event.EventName == CMD_StrategyChange {
 					strategyName, isOk := event.Data.(string)
 					if !isOk {
 						panic(err)
@@ -80,6 +80,8 @@ func (lb *LB) Run() {
 					switch strategyName {
 					case "round-robin":
 						lb.strategy = NewRRBalancingStrategy(lb.backends)
+					case "static":
+						lb.strategy = NewStaticBalancingStrategy(lb.backends)
 					default:
 						lb.strategy = NewRRBalancingStrategy(lb.backends)
 					}
