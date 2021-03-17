@@ -1,9 +1,12 @@
 package main
 
+import "fmt"
+
 type BalancingStrategy interface {
 	Init([]*Backend)
 	GetNextBackend(IncomingReq) *Backend
 	RegisterBackend(*Backend)
+	PrintTopology()
 }
 
 type RRBalancingStrategy struct {
@@ -23,6 +26,12 @@ func (s *RRBalancingStrategy) GetNextBackend(_ IncomingReq) *Backend {
 
 func (s *RRBalancingStrategy) RegisterBackend(backend *Backend) {
 	s.Backends = append(s.Backends, backend)
+}
+
+func (s *RRBalancingStrategy) PrintTopology() {
+	for index, backend := range s.Backends {
+		fmt.Println(fmt.Sprintf("      [%d] %s", index, backend))
+	}
 }
 
 func NewRRBalancingStrategy(backends []*Backend) *RRBalancingStrategy {

@@ -7,15 +7,7 @@ import (
 )
 
 func printBackends() {
-	fmt.Println("Backends:")
-	backends := lb.backends
-	if len(backends) == 0 {
-		fmt.Println("  no backends")
-	} else {
-		for _, backend := range backends {
-			fmt.Println(fmt.Sprintf("  - %s", backend))
-		}
-	}
+	lb.strategy.PrintTopology()
 }
 
 func cli() {
@@ -32,8 +24,6 @@ func cli() {
 			lb.events <- Event{EventName: "quit"}
 			// TODO: this is not idea. End this gracefully.
 			return
-		case "list":
-			printBackends()
 		case "add":
 			var host string
 			var port int
@@ -60,8 +50,10 @@ func cli() {
 
 			backend := lb.strategy.GetNextBackend(IncomingReq{reqId: reqId})
 			fmt.Printf("request: %s goes to backend: %s\n", reqId, backend)
+		case "topology":
+			printBackends()
 		default:
-			fmt.Println("available commands: list, add, strategy, exit")
+			fmt.Println("available commands: topology, add, strategy, exit")
 		}
 	}
 }
