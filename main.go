@@ -55,6 +55,15 @@ func cli() {
 			fmt.Scanf("%s", &strategy)
 
 			lb.events <- Event{EventName: CMD_StrategyChange, Data: strategy}
+		case CMD_StrategyEdit:
+			if strategy, isOk := lb.strategy.(*StaticBalancingStrategy); isOk {
+				var index int
+				fmt.Print("       Index of Backend to be active: ")
+				fmt.Scanf("%d", &index)
+				strategy.Index = index
+			} else {
+				fmt.Println("this balancing strategy does not support edits.")
+			}
 		case CMD_TopologyTest:
 			var reqId string
 
