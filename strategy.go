@@ -1,20 +1,32 @@
 package main
 
 type BalancingStrategy interface {
-	GetNextBackend([]*Backend) *Backend
+	Init([]*Backend)
+	GetNextBackend() *Backend
+	RegisterBackend(*Backend)
 }
 
-type RoundRobinBalancingStrategy struct {
-	Index int
+type RRBalancingStrategy struct {
+	Index    int
+	Backends []*Backend
 }
 
-func (s *RoundRobinBalancingStrategy) GetNextBackend(backends []*Backend) *Backend {
-	s.Index = (s.Index + 1) % len(backends)
-	return backends[s.Index]
+func (s *RRBalancingStrategy) Init(backends []*Backend) {
+	s.Index = 0
+	s.Backends = backends
 }
 
-var STRATEGY_ROUNDROBIN *RoundRobinBalancingStrategy
+func (s *RRBalancingStrategy) GetNextBackend() *Backend {
+	s.Index = (s.Index + 1) % len(s.Backends)
+	return s.Backends[s.Index]
+}
 
-func InitStrategy() {
-	STRATEGY_ROUNDROBIN = &RoundRobinBalancingStrategy{Index: 0}
+func (s *RRBalancingStrategy) RegisterBackend(backend *Backend) {
+	s.Backends = append(s.Backends, backend)
+}
+
+func NewRRBalancingStrategy(backends []*Backend) *RRBalancingStrategy {
+	strategy := new(RRBalancingStrategy)
+	strategy.Init(backends)
+	return strategy
 }

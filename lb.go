@@ -39,12 +39,13 @@ type IncomingReq struct {
 var lb *LB
 
 func InitLB() {
+	backends := []*Backend{
+		&Backend{Host: "localhost", Port: 8081, IsHealthy: true},
+	}
 	lb = &LB{
-		events: make(chan Event),
-		backends: []*Backend{
-			&Backend{Host: "localhost", Port: 8081, IsHealthy: true},
-		},
-		strategy: STRATEGY_ROUNDROBIN,
+		events:   make(chan Event),
+		backends: backends,
+		strategy: NewRRBalancingStrategy(backends),
 	}
 }
 
@@ -70,6 +71,7 @@ func (lb *LB) Run() {
 						panic(err)
 					}
 					lb.backends = append(lb.backends, &backend)
+					lb.strategy.RegisterBackend(&backend)
 				} else if event.EventName == "strategy/change" {
 					strategyName, isOk := event.Data.(string)
 					if !isOk {
@@ -77,9 +79,9 @@ func (lb *LB) Run() {
 					}
 					switch strategyName {
 					case "round-robin":
-						lb.strategy = STRATEGY_ROUNDROBIN
+						lb.strategy = NewRRBalancingStrategy(lb.backends)
 					default:
-						lb.strategy = STRATEGY_ROUNDROBIN
+						lb.strategy = NewRRBalancingStrategy(lb.backends)
 					}
 				}
 			}
@@ -105,13 +107,13 @@ func (lb *LB) Run() {
 
 func (lb *LB) proxy(req IncomingReq) {
 	// Get backend sserver depending on some algorithm
-	backend := lb.strategy.GetNextBackend(lb.backends)
+	backend := lb.strategy.GetNextBackend()
 	log.Printf("in-req: %s out-req: %s", req.reqId, backend.String())
 
 	// Setup backend connection
 	backendServerConnection, err := net.Dial("tcp", fmt.Sprintf("%s:%d", backend.Host, backend.Port))
 	if err != nil {
-		log.Printf("error connecting to backend. %s", err.Error())
+		log.Printf("error connecting to backend: %s", err.Error())
 
 		// send back error to src
 		req.srcConn.Write([]byte("backend not available"))
