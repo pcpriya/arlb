@@ -22,3 +22,4 @@ go run .
  [ ] Ability to healthcheck and stop/start routing traffic to heaalthy ones
  [ ] Consistent Hashing for load balancing
  [x] Unique ID to request
+ [x] Simulate Balancing Strategy by giving request id.
