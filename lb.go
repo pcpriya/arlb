@@ -62,17 +62,18 @@ func (lb *LB) Run() {
 		for {
 			select {
 			case event := <-lb.events:
-				if event.EventName == CMD_Exit {
+				switch event.EventName {
+				case CMD_Exit:
 					log.Println("gracefully terminating ...")
 					return
-				} else if event.EventName == CMD_BackendAdd {
+				case CMD_BackendAdd:
 					backend, isOk := event.Data.(Backend)
 					if !isOk {
 						panic(err)
 					}
 					lb.backends = append(lb.backends, &backend)
 					lb.strategy.RegisterBackend(&backend)
-				} else if event.EventName == CMD_StrategyChange {
+				case CMD_StrategyChange:
 					strategyName, isOk := event.Data.(string)
 					if !isOk {
 						panic(err)
